@@ -23,6 +23,23 @@ impl Fetcher {
         Ok(Response::from(resp_sys))
     }
 
+    /// Invoke a fetch event in a worker with a url and optionally a [RequestInit] and
+    /// return web_sys::Response
+    pub async fn fetch_raw(
+        &self,
+        url: impl Into<String>,
+        init: Option<RequestInit>,
+    ) -> Result<web_sys::Response> {
+        let path = url.into();
+        let promise = match init {
+            Some(ref init) => self.0.fetch_with_str_and_init(&path, &init.into()),
+            None => self.0.fetch_with_str(&path),
+        };
+
+        let resp_sys: web_sys::Response = JsFuture::from(promise).await?.dyn_into()?;
+        Ok(resp_sys)
+    }
+
     /// Invoke a fetch event with an existing [Request].
     pub async fn fetch_request(&self, request: Request) -> Result<Response> {
         let promise = self.0.fetch(request.inner());
